@@ -2,7 +2,7 @@ import React from "react"
 import "./App.css"
 import JsonViewer from "./jsonviewer"
 
-const sampleJson = [
+const sampleJson = JSON.stringify([
   {
     name: "John Doe",
     age: 30,
@@ -17,14 +17,16 @@ const sampleJson = [
       { football: { type: "active", preferenceRating: 1 } },
       { traveling: { type: "hybrid", preferenceRating: 3 } },
     ],
+    isSmart: false,
+    birthDate: new Date("1990-11-30T11:30:00.000Z"),
   },
-]
+])
 
 const App: React.FC = () => {
   return (
     <div className="App">
       <h1>Custom JSON Viewer</h1>
-      <JsonViewer data={sampleJson} />
+      <JsonViewer data={JSON.parse(sampleJson)} />
     </div>
   )
 }
