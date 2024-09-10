@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react"
-import { Box, Button, Typography, IconButton } from "@mui/material"
-import { ExpandMore, ExpandLess, ContentCopy } from "@mui/icons-material"
+import { ContentCopy, ExpandLess, ExpandMore } from "@mui/icons-material"
+import { Box, IconButton, Typography } from "@mui/material"
+import React, { useEffect, useState } from "react"
 import "./app.css" // Import the CSS file
 
 interface JsonViewerProps {
