@@ -42,3 +42,11 @@
 .json-viewer span {
   cursor: pointer;
 }
+
+.json-value {
+  color: #d73a49; /* Red color for values */
+}
+
+.json-key {
+  color: #032f62; /* Blue color for keys */
+}

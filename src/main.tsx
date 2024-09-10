@@ -1,5 +1,22 @@
-import { render } from "preact"
-import App from "./app.tsx"
-import "./index.css"
+import React from "react"
+import ReactDOM from "react-dom"
+import App from "./app"
+import { ThemeProvider, createTheme } from "@mui/material/styles"
+import CssBaseline from "@mui/material/CssBaseline"
 
-render(<App />, document.getElementById("app")!)
+const theme = createTheme({
+  palette: {
+    mode: "light",
+  },
+})
+
+const appElement = document.getElementById("app");
+if (appElement) {
+  ReactDOM.render(
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <App />
+    </ThemeProvider>,
+    appElement
+  );
+}
