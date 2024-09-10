@@ -1,22 +1,24 @@
 import React from "react"
-import JsonViewer from "./jsonviewer"
 import "./App.css"
+import JsonViewer from "./jsonviewer"
 
-const sampleJson = {
-  name: "John Doe",
-  age: 30,
-  address: {
-    street: "dorpstraat 3",
-    postalCode: "1234 AB",
-    city: "Bovendorp",
-    country: "Netherlands",
+const sampleJson = [
+  {
+    name: "John Doe",
+    age: 30,
+    address: {
+      street: "dorpstraat 3",
+      postalCode: "1234 AB",
+      city: "Bovendorp",
+      country: "Netherlands",
+    },
+    hobbies: [
+      { reading: { type: "passive", preferenceRating: 2 } },
+      { football: { type: "active", preferenceRating: 1 } },
+      { traveling: { type: "hybrid", preferenceRating: 3 } },
+    ],
   },
-  hobbies: [
-    { reading: { type: "passive", preferenceRating: 2 } },
-    { football: { type: "active", preferenceRating: 1 } },
-    { traveling: { type: "hybrid", preferenceRating: 3 } },
-  ],
-}
+]
 
 const App: React.FC = () => {
   return (

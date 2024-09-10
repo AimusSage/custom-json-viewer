@@ -1,4 +1,4 @@
-import {ContentCopy, ExpandLess, ExpandMore} from "@mui/icons-material"
+import { ContentCopy, ExpandLess, ExpandMore } from "@mui/icons-material"
 import {
   Box,
   Grid2,
@@ -7,16 +7,17 @@ import {
   ListItem,
   Typography,
 } from "@mui/material"
-import React, {useEffect, useState} from "react"
-import "./app.css"; // Import the CSS file
+import React, { useEffect, useState } from "react"
+import "./app.css" // Import the CSS file
 
 interface JsonViewerProps {
   data: object
 }
 
 const JsonViewer: React.FC<JsonViewerProps> = ({ data }) => {
-  const [collapsed, setCollapsed] = useState<{ [key: string]: boolean }>({})
-  const [isTopLevelCollapsed, setIsTopLevelCollapsed] = useState<boolean>(false)
+  const [collapsed, setCollapsed] = useState<{ [key: string]: boolean }>({
+    __topLevel__: true,
+  })
 
   useEffect(() => {
     // Initialize the collapsed state with first-level keys set to true
@@ -24,7 +25,6 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ data }) => {
     const iterateCollapse = (values: any, parentKey: string = "") => {
       if (typeof values === "object" && values !== null) {
         Object.keys(values).forEach((key) => {
-          console.log(values)
           const fullKey = parentKey ? `${parentKey}.${key}` : key
           initialCollapsedState[fullKey] = true
           return iterateCollapse(values[key], fullKey)
@@ -32,7 +32,7 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ data }) => {
       }
     }
     iterateCollapse(data)
-    setCollapsed(initialCollapsedState)
+    setCollapsed((prevState) => ({ ...prevState, ...initialCollapsedState }))
   }, [data])
 
   const toggleCollapse = (key: string) => {
@@ -40,10 +40,6 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ data }) => {
       ...prevState,
       [key]: !prevState[key],
     }))
-  }
-
-  const toggleTopLevelCollapse = () => {
-    setIsTopLevelCollapsed((prevState) => !prevState)
   }
 
   const copyToClipboard = (value: any) => {
@@ -156,21 +152,24 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ data }) => {
       )
     }
   }
-
+  console.log(collapsed["__topLevel__"])
   return (
     <Grid2 container className="json-viewer">
-      {isTopLevelCollapsed && (
+      {collapsed["__topLevel__"] && (
         <Grid2 sx={{ paddingLeft: 2 }}>
           <Typography
             variant="h6"
             component="span"
             className="json-key"
-            onClick={toggleTopLevelCollapse}
+            onClick={() => toggleCollapse("__topLevel__")}
           >
             {Array.isArray(data) ? "[...]" : "{...}"}
           </Typography>
-          <IconButton onClick={toggleTopLevelCollapse} size="small">
-            {isTopLevelCollapsed ? <ExpandMore /> : <ExpandLess />}
+          <IconButton
+            onClick={() => toggleCollapse("__topLevel__")}
+            size="small"
+          >
+            {collapsed["__topLevel__"] ? <ExpandMore /> : <ExpandLess />}
           </IconButton>
           <IconButton onClick={() => copyToClipboard(data)} size="small">
             <ContentCopy />
@@ -178,17 +177,20 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ data }) => {
         </Grid2>
       )}
 
-      {!isTopLevelCollapsed && (
+      {!collapsed["__topLevel__"] && (
         <Grid2 sx={{ paddingLeft: 2 }}>
           <Typography
             variant="body1"
             component="span"
-            onClick={toggleTopLevelCollapse}
+            onClick={() => toggleCollapse("__topLevel__")}
           >
             {Array.isArray(data) ? "[" : "{"}
           </Typography>
-          <IconButton onClick={toggleTopLevelCollapse} size="small">
-            {isTopLevelCollapsed ? <ExpandMore /> : <ExpandLess />}
+          <IconButton
+            onClick={() => toggleCollapse("__topLevel__")}
+            size="small"
+          >
+            {collapsed["__topLevel__"] ? <ExpandMore /> : <ExpandLess />}
           </IconButton>
           <IconButton onClick={() => copyToClipboard(data)} size="small">
             <ContentCopy />
