@@ -7,41 +7,136 @@ import {
   ListItem,
   Typography,
 } from "@mui/material"
-import React, { useEffect, useState } from "react"
+import React, { useState } from "react"
 import "./app.css" // Import the CSS file
+
+const parentCopyHoverStyle = (className: string = "") => ({
+  position: "relative",
+  [`&:hover .${className}`]: { visibility: "visible" },
+})
+
+const copyIconHoverStyle = {
+  visibility: "hidden",
+}
+
+interface JsonKeyValueProps {
+  copyToClipboard: (value: any) => void
+  fullKey: string
+  keyName: string
+  value: any
+  renderJson: (data: any, parentKey: string) => JSX.Element
+}
+
+const JsonKeyValue: React.FC<JsonKeyValueProps> = ({
+  copyToClipboard,
+  fullKey,
+  keyName,
+  value,
+  renderJson,
+}) => {
+  const [collapsed, setCollapsed] = useState<boolean>(true)
+
+  const isObject = typeof value === "object" && value !== null
+  const isArray = Array.isArray(value)
+  const copyClassName = `copy-button-${fullKey.replace(/\./g, "-")}`
+
+  const toggleCollapse = () => {
+    setCollapsed(!collapsed)
+  }
+
+  return (
+    <ListItem key={fullKey} sx={{ marginBottom: 0 }}>
+      {isObject ? (
+        <Grid2 key={fullKey} container>
+          {collapsed && (
+            <Grid2 sx={parentCopyHoverStyle(copyClassName)}>
+              <Box component="span" onClick={toggleCollapse}>
+                <Typography
+                  variant="body1"
+                  component="span"
+                  className="json-key"
+                >
+                  {keyName ? `${keyName} : ` : ""}
+                  {isArray ? "[...]" : isObject ? "{...}" : ""}
+                </Typography>
+                <IconButton size="small">
+                  <ExpandMore />
+                </IconButton>
+              </Box>
+              <IconButton
+                sx={copyIconHoverStyle}
+                className={copyClassName}
+                onClick={() => copyToClipboard(value)}
+                size="small"
+              >
+                <ContentCopy />
+              </IconButton>
+            </Grid2>
+          )}
+          {!collapsed && (
+            <Grid2>
+              <Box component="span" sx={parentCopyHoverStyle(copyClassName)}>
+                <Box component="span" onClick={toggleCollapse}>
+                  <Typography
+                    variant="body1"
+                    component="span"
+                    className="json-key"
+                  >
+                    {keyName ? `${keyName} : ` : ""}
+                    {isArray ? "[" : isObject ? "{" : ""}
+                  </Typography>
+                  <IconButton size="small">
+                    <ExpandLess />
+                  </IconButton>
+                </Box>
+                <IconButton
+                  sx={copyIconHoverStyle}
+                  className={copyClassName}
+                  onClick={() => copyToClipboard(value)}
+                  size="small"
+                >
+                  <ContentCopy />
+                </IconButton>
+              </Box>
+              {renderJson(value, fullKey)}
+              <Typography variant="body1" component="span">
+                {isArray ? "]" : isObject ? "}" : ""}
+              </Typography>
+            </Grid2>
+          )}
+        </Grid2>
+      ) : (
+        <Grid2 sx={parentCopyHoverStyle(copyClassName)}>
+          <Typography variant="body1" component="span" className="json-key">
+            {keyName}:{" "}
+          </Typography>
+          <Typography
+            variant="body1"
+            component="span"
+            className="json-value"
+            sx={{ marginLeft: 1 }}
+          >
+            {String(value)}
+          </Typography>
+          <IconButton
+            sx={copyIconHoverStyle}
+            className={copyClassName}
+            onClick={() => copyToClipboard(value)}
+            size="small"
+          >
+            <ContentCopy />
+          </IconButton>
+        </Grid2>
+      )}
+    </ListItem>
+  )
+}
 
 interface JsonViewerProps {
   data: object
 }
 
 const JsonViewer: React.FC<JsonViewerProps> = ({ data }) => {
-  const [collapsed, setCollapsed] = useState<{ [key: string]: boolean }>({
-    __topLevel__: true,
-  })
-
-  useEffect(() => {
-    // Initialize the collapsed state with first-level keys set to true
-    const initialCollapsedState: { [key: string]: boolean } = {}
-    const iterateCollapse = (values: any, parentKey: string = "") => {
-      if (typeof values === "object" && values !== null) {
-        Object.keys(values).forEach((key) => {
-          const fullKey = parentKey ? `${parentKey}.${key}` : key
-          initialCollapsedState[fullKey] = true
-          return iterateCollapse(values[key], fullKey)
-        })
-      }
-    }
-    iterateCollapse(data)
-    setCollapsed((prevState) => ({ ...prevState, ...initialCollapsedState }))
-  }, [data])
-
-  const toggleCollapse = (key: string) => {
-    setCollapsed((prevState) => ({
-      ...prevState,
-      [key]: !prevState[key],
-    }))
-  }
-
   const copyToClipboard = (value: any) => {
     navigator.clipboard
       .writeText(JSON.stringify(value, null, 2))
@@ -51,95 +146,18 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ data }) => {
   const renderJson = (data: any, parentKey: string = "") => {
     if (typeof data === "object" && data !== null) {
       return (
-        <List component="ul" sx={{ paddingLeft: 2 }}>
+        <List sx={{ paddingLeft: 2 }}>
           {Object.entries(data).map(([key, value]) => {
             const fullKey = parentKey ? `${parentKey}.${key}` : key
-            const isCollapsed = collapsed[fullKey]
-            const isObject = typeof value === "object" && value !== null
-            const isArray = Array.isArray(value)
 
             return (
-              <ListItem component="li" key={fullKey} sx={{ marginBottom: 1 }}>
-                {isObject ? (
-                  <Grid2 container>
-                    <Grid2>
-                      {isCollapsed && (
-                        <Box>
-                          <span onClick={() => toggleCollapse(fullKey)}>
-                            <Typography
-                              variant="body1"
-                              component="span"
-                              className="json-key"
-                            >
-                              {key}:{" "}
-                              {isArray ? "[...]" : isObject ? "{...}" : ""}
-                            </Typography>
-                            <IconButton size="small">
-                              {isCollapsed ? <ExpandMore /> : <ExpandLess />}
-                            </IconButton>
-                          </span>
-                          <IconButton
-                            onClick={() => copyToClipboard(value)}
-                            size="small"
-                          >
-                            <ContentCopy />
-                          </IconButton>
-                        </Box>
-                      )}
-                    </Grid2>
-                    {!isCollapsed && (
-                      <Grid2>
-                        <span onClick={() => toggleCollapse(fullKey)}>
-                          <Typography
-                            variant="body1"
-                            component="span"
-                            className="json-key"
-                          >
-                            {key}: {isArray ? "[" : isObject ? "{" : ""}
-                          </Typography>
-                          <IconButton size="small">
-                            {isCollapsed ? <ExpandMore /> : <ExpandLess />}
-                          </IconButton>
-                        </span>
-                        <IconButton
-                          onClick={() => copyToClipboard(value)}
-                          size="small"
-                        >
-                          <ContentCopy />
-                        </IconButton>
-                        {renderJson(value, fullKey)}
-                        <Typography variant="body1" component="span">
-                          {isArray ? "]" : isObject ? "}" : ""}
-                        </Typography>
-                      </Grid2>
-                    )}
-                  </Grid2>
-                ) : (
-                  <Grid2>
-                    <Typography
-                      variant="body1"
-                      component="span"
-                      className="json-key"
-                    >
-                      {key}:{" "}
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      component="span"
-                      className="json-value"
-                      sx={{ marginLeft: 1 }}
-                    >
-                      {String(value)}
-                    </Typography>
-                    <IconButton
-                      onClick={() => copyToClipboard(value)}
-                      size="small"
-                    >
-                      <ContentCopy />
-                    </IconButton>
-                  </Grid2>
-                )}
-              </ListItem>
+              <JsonKeyValue
+                copyToClipboard={copyToClipboard}
+                fullKey={fullKey}
+                keyName={key}
+                renderJson={renderJson}
+                value={value}
+              />
             )
           })}
         </List>
@@ -152,55 +170,16 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ data }) => {
       )
     }
   }
-  console.log(collapsed["__topLevel__"])
+
   return (
     <Grid2 container className="json-viewer">
-      {collapsed["__topLevel__"] && (
-        <Grid2 sx={{ paddingLeft: 2 }}>
-          <Typography
-            variant="h6"
-            component="span"
-            className="json-key"
-            onClick={() => toggleCollapse("__topLevel__")}
-          >
-            {Array.isArray(data) ? "[...]" : "{...}"}
-          </Typography>
-          <IconButton
-            onClick={() => toggleCollapse("__topLevel__")}
-            size="small"
-          >
-            {collapsed["__topLevel__"] ? <ExpandMore /> : <ExpandLess />}
-          </IconButton>
-          <IconButton onClick={() => copyToClipboard(data)} size="small">
-            <ContentCopy />
-          </IconButton>
-        </Grid2>
-      )}
-
-      {!collapsed["__topLevel__"] && (
-        <Grid2 sx={{ paddingLeft: 2 }}>
-          <Typography
-            variant="body1"
-            component="span"
-            onClick={() => toggleCollapse("__topLevel__")}
-          >
-            {Array.isArray(data) ? "[" : "{"}
-          </Typography>
-          <IconButton
-            onClick={() => toggleCollapse("__topLevel__")}
-            size="small"
-          >
-            {collapsed["__topLevel__"] ? <ExpandMore /> : <ExpandLess />}
-          </IconButton>
-          <IconButton onClick={() => copyToClipboard(data)} size="small">
-            <ContentCopy />
-          </IconButton>
-          {renderJson(data)}
-          <Typography variant="body1" component="span">
-            {Array.isArray(data) ? "]" : "}"}
-          </Typography>
-        </Grid2>
-      )}
+      <JsonKeyValue
+        copyToClipboard={copyToClipboard}
+        fullKey="top-level"
+        keyName=""
+        value={data}
+        renderJson={renderJson}
+      />
     </Grid2>
   )
 }
