@@ -1,4 +1,4 @@
-import { ContentCopy, ExpandLess, ExpandMore } from "@mui/icons-material"
+import { ContentCopy, ExpandLess } from "@mui/icons-material"
 import {
   Box,
   Grid2,
@@ -8,9 +8,18 @@ import {
   Typography,
 } from "@mui/material"
 import React, { useState } from "react"
-import "./app.css" // Import the CSS file
 
-const parentCopyHoverStyle = (className: string = "") => ({
+const valueFormatter = (value: unknown) => {
+  // const color = typeof value === 'string' ? 'red' : 'blue'
+  const parsedValue = typeof value === "string" ? `"${value}"` : String(value)
+
+  return (
+    <Typography variant="body1" component="span" sx={{ marginLeft: 1 }}>
+      {parsedValue}
+    </Typography>
+  )
+}
+const parentCopyHoverStyle = (className: string) => ({
   position: "relative",
   [`&:hover .${className}`]: { visibility: "visible" },
 })
@@ -20,11 +29,11 @@ const copyIconHoverStyle = {
 }
 
 interface JsonKeyValueProps {
-  copyToClipboard: (value: any) => void
+  copyToClipboard: (value: unknown) => void
   fullKey: string
   keyName: string
-  value: any
-  renderJson: (data: any, parentKey: string) => JSX.Element
+  value: unknown
+  renderJson: (renderData: object, parentKey: string) => JSX.Element
 }
 
 const JsonKeyValue: React.FC<JsonKeyValueProps> = ({
@@ -45,31 +54,31 @@ const JsonKeyValue: React.FC<JsonKeyValueProps> = ({
   }
 
   return (
-    <ListItem key={fullKey} sx={{ marginBottom: 0 }}>
+    <ListItem dense key={fullKey} sx={{ marginBottom: 0 }}>
       {isObject ? (
         <Grid2 key={fullKey} container>
           {collapsed && (
             <Grid2 sx={parentCopyHoverStyle(copyClassName)}>
               <Box component="span" onClick={toggleCollapse}>
                 <Typography
+                  sx={{ cursor: "pointer" }}
                   variant="body1"
                   component="span"
                   className="json-key"
                 >
                   {keyName ? `${keyName} : ` : ""}
-                  {isArray ? "[...]" : isObject ? "{...}" : ""}
+                  {isArray && "[ ... ]"}
+                  {isObject && !isArray && "{ ... }"}
                 </Typography>
-                <IconButton size="small">
-                  <ExpandMore />
-                </IconButton>
               </Box>
               <IconButton
-                sx={copyIconHoverStyle}
+                sx={{ ...copyIconHoverStyle, fontSize: "0.8rem" }}
+                aria-label={copyClassName}
                 className={copyClassName}
                 onClick={() => copyToClipboard(value)}
                 size="small"
               >
-                <ContentCopy />
+                <ContentCopy sx={{ fontSize: "1rem" }} />
               </IconButton>
             </Grid2>
           )}
@@ -78,54 +87,54 @@ const JsonKeyValue: React.FC<JsonKeyValueProps> = ({
               <Box component="span" sx={parentCopyHoverStyle(copyClassName)}>
                 <Box component="span" onClick={toggleCollapse}>
                   <Typography
+                    sx={{ cursor: "pointer" }}
                     variant="body1"
                     component="span"
                     className="json-key"
                   >
                     {keyName ? `${keyName} : ` : ""}
-                    {isArray ? "[" : isObject ? "{" : ""}
+                    {isArray && "["}
+                    {!isArray && isObject && "{"}
                   </Typography>
-                  <IconButton size="small">
-                    <ExpandLess />
+                  <IconButton sx={{ fontSize: "0.8rem" }} size="small">
+                    <ExpandLess sx={{ fontSize: "1rem" }} />
                   </IconButton>
                 </Box>
                 <IconButton
-                  sx={copyIconHoverStyle}
+                  aria-label={copyClassName}
+                  sx={{ ...copyIconHoverStyle, fontSize: "0.8rem" }}
                   className={copyClassName}
                   onClick={() => copyToClipboard(value)}
                   size="small"
                 >
-                  <ContentCopy />
+                  <ContentCopy sx={{ fontSize: "1rem" }} />
                 </IconButton>
               </Box>
               {renderJson(value, fullKey)}
               <Typography variant="body1" component="span">
-                {isArray ? "]" : isObject ? "}" : ""}
+                {isArray && "]"}
+                {!isArray && isObject && "}"}
               </Typography>
             </Grid2>
           )}
         </Grid2>
       ) : (
-        <Grid2 sx={parentCopyHoverStyle(copyClassName)}>
-          <Typography variant="body1" component="span" className="json-key">
-            {keyName}:{" "}
-          </Typography>
-          <Typography
-            variant="body1"
-            component="span"
-            className="json-value"
-            sx={{ marginLeft: 1 }}
-          >
-            {String(value)}
-          </Typography>
-          <IconButton
-            sx={copyIconHoverStyle}
-            className={copyClassName}
-            onClick={() => copyToClipboard(value)}
-            size="small"
-          >
-            <ContentCopy />
-          </IconButton>
+        <Grid2 key={fullKey} container sx={parentCopyHoverStyle(copyClassName)}>
+          <Grid2>
+            <Typography variant="body1" component="span">
+              {keyName}:{" "}
+            </Typography>
+            {valueFormatter(value)}
+            <IconButton
+              sx={{ ...copyIconHoverStyle, fontSize: "0.8rem" }}
+              aria-label={copyClassName}
+              className={copyClassName}
+              onClick={() => copyToClipboard(value)}
+              size="small"
+            >
+              <ContentCopy sx={{ fontSize: "1rem" }} />
+            </IconButton>
+          </Grid2>
         </Grid2>
       )}
     </ListItem>
@@ -133,49 +142,44 @@ const JsonKeyValue: React.FC<JsonKeyValueProps> = ({
 }
 
 interface JsonViewerProps {
-  data: object
+  data: unknown
 }
 
-const JsonViewer: React.FC<JsonViewerProps> = ({ data }) => {
-  const copyToClipboard = (value: any) => {
-    navigator.clipboard
-      .writeText(JSON.stringify(value, null, 2))
-      .catch((err) => alert(`Failed to copy: ${err}`))
+export const JsonViewer: React.FC<JsonViewerProps> = ({ data }) => {
+  const copyToClipboard = (value: unknown) => {
+    navigator.clipboard.writeText(JSON.stringify(value, null, 2))
   }
 
-  const renderJson = (data: any, parentKey: string = "") => {
-    if (typeof data === "object" && data !== null) {
-      return (
-        <List sx={{ paddingLeft: 2 }}>
-          {Object.entries(data).map(([key, value]) => {
-            const fullKey = parentKey ? `${parentKey}.${key}` : key
-
-            return (
-              <JsonKeyValue
-                copyToClipboard={copyToClipboard}
-                fullKey={fullKey}
-                keyName={key}
-                renderJson={renderJson}
-                value={value}
-              />
-            )
-          })}
-        </List>
-      )
-    } else {
-      return (
-        <Typography variant="body1" component="span" className="json-value">
-          {String(data)}
-        </Typography>
-      )
-    }
-  }
+  const renderJson = (renderData: object, parentKey: string) => (
+    <List sx={{ paddingLeft: 2 }}>
+      {Object.entries(renderData).map(([key, value]) => {
+        const fullKey = parentKey ? `${parentKey}.${key}` : key
+        return (
+          <JsonKeyValue
+            key={fullKey}
+            copyToClipboard={copyToClipboard}
+            fullKey={fullKey}
+            keyName={key}
+            renderJson={renderJson}
+            value={value}
+          />
+        )
+      })}
+    </List>
+  )
 
   return (
-    <Grid2 container className="json-viewer">
+    <Grid2
+      container
+      sx={{
+        "font-family": "monospace",
+        padding: "10px",
+        "border-radius": "5px",
+      }}
+    >
       <JsonKeyValue
         copyToClipboard={copyToClipboard}
-        fullKey="top-level"
+        fullKey=""
         keyName=""
         value={data}
         renderJson={renderJson}
@@ -183,5 +187,3 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ data }) => {
     </Grid2>
   )
 }
-
-export default JsonViewer

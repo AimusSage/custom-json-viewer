@@ -1,6 +1,6 @@
 import React from "react"
 import "./App.css"
-import JsonViewer from "./JsonViewer"
+import { JsonViewer } from "./JsonViewer"
 
 const sampleJson = JSON.stringify({
   name: "John Doe",
